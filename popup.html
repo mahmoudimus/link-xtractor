@@ -1,0 +1,76 @@
+<html>
+<head>
+  <style type="text/css">
+    html {
+      width: 600px;
+    }
+
+    body {
+      height: auto;
+      margin: 0;
+      font: 12px "Lucida Grande", verdana, sans-serif;
+      -moz-user-select: none;
+      overflow-x: hidden;
+      overflow-y: hidden;
+    }
+
+    #results {
+      line-height: 95%;
+      text-align: left;
+      overflow-x: hidden;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+
+    .link {
+      /* width: 360px; */
+      padding-bottom: 7px;
+    }
+
+    .value {
+      /* width: 300px; */
+      text-align: left;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    img {
+      float: left;
+    }
+
+    a {
+      color: #169131;
+      width: 340px;
+      display: block;
+    }
+
+    a:hover, a:visited {
+      color: #afd33f;
+    }
+
+
+  </style>
+  <script type='text/javascript' src='jquery.min.js'></script>
+  <script type='text/javascript' src='jquery.url.js'></script>
+  <script type='text/javascript' src="xtract.js"></script>
+</head>
+
+<body>
+<input id="button1"
+       type="button"
+       value="copy results to clipboard"/>
+<input id="button2"
+       type="button"
+       value="copy errors to clipboard"/>
+<hr/>
+<div>
+  <h2>Errors:</h2>
+  <div id="errors"></div>
+</div>
+<hr/>
+<div>
+  <h2>Results:</h2>
+  <div id="results"></div>
+</div>
+</body>
+</html>

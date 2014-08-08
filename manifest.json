@@ -1,0 +1,29 @@
+{
+  "author": "mahmoudimus",
+  "background": {
+//    "page": "background.html",
+    "scripts": ["jquery.min.js", "jquery.url.js", "bg.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_title": "link xtractor",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*"],
+      "js": ["jquery.min.js", "jquery.url.js", "content_script.js"]
+    }
+  ],
+  "description": "Extracts all appropriate links in the page that can be downloaded.",
+  "icons": {
+    "16": "icon.png"
+  },
+  "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDdJO/novLvRs4hYncHyeAVNDdZBLWFNrr2CREYiGF2Mgi8zNtqToaaNpMKzR2gOTc1Y3kEs6CJO6yg0lehfpPXKjtHPslBl8Z2csDWqpzinyQ9kvzICrssPGPKFeTirf+j+9713QA5zvX/fzati7CmQQh3l2C/dI0b0o8PijLTvQIDAQAB",
+  "name": "Link Xtractor",
+  "permissions": [ "tabs", "chrome://favicon/", "unlimitedStorage", "http://*/*", "https://*/*" ],
+  "update_url": "http://clients2.google.com/service/update2/crx",
+  "version": "0.2",
+  "manifest_version": 2
+}
