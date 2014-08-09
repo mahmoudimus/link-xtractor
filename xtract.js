@@ -120,41 +120,37 @@ function handleExtractedText(message) {
     ].join(','));
   }
 
+
 } // end addListener
 function onLoad() {
-  // for all the tabs in the current window
-  chrome.windows.getAll(
-    {populate: true},
-    function handleWindows(windows) {
-      var hosts_of_interest = [
-          'library.nu',
-          'avaxhome.ws',
-          'avaxhome.bz',
-          'tutolearning.com',
-          'avaxho.me',
-          'avaxhome.cc',
-          'avaxhm.com'
-        ]
-        , url = null
-        , current_tab = null
-        , bkg = chrome.extension.getBackgroundPage()
-        , extracted_urls = null;
 
-      for (var i = 0; i < windows.length; ++i) {
-        for (var j = 0; j < windows[i].tabs.length; ++j) {
-          current_tab = windows[i].tabs[j];
-
-          url = $.url(current_tab.url);
-          // if we're not interested in this url, continue
-          if (hosts_of_interest.indexOf(url.attr('host')) === -1) {
-            continue;
-          }
-          chrome.tabs.executeScript(current_tab.id, {file: "content_script.js"}, function(r) {
-            handleExtractedText(r[0]);
-          });
-        } // end for (j)
-      } // end for (i)
-    });
+  chrome.storage.sync.get('interesting_hosts', function (data) {
+    var hosts_of_interest = data['interesting_hosts'] || [];
+    // for all the tabs in the current window
+    chrome.windows.getAll({
+        populate: true
+      },
+      function handleWindows(windows) {
+        var url = null
+          , current_tab = null;
+        for (var i = 0; i < windows.length; ++i) {
+          for (var j = 0; j < windows[i].tabs.length; ++j) {
+            current_tab = windows[i].tabs[j];
+            url = $.url(current_tab.url);
+            // if we're not interested in this url, continue
+            if (hosts_of_interest.indexOf(url.attr('host')) === -1) {
+              continue;
+            }
+            chrome.tabs.executeScript(
+              current_tab.id,
+              {file: "content_script.js"},
+              function (r) {
+                handleExtractedText(r[0]);
+              });
+          } // end for (j)
+        } // end for (i)
+      });
+  });
 }
 
 Clipboard = {};
