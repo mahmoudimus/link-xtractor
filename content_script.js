@@ -27,25 +27,7 @@ function extractLinks() {
   };
 }
 
-
-///* starts a long running connection process to the background.html page */
-//function sendPayload() {
-//  var message = extractLinks();
-//  chrome.extension.connect().postMessage(message);
-//  return message;
-//}
-//
-//chrome.extension.onMessage.addListener(
-//  function (request, sender, sendResponse) {
-//    if (request.action == "sendPayload") {
-//      sendResponse({'response': sendPayload()});
-//    }
-//    else
-//      sendResponse({}); // Send nothing.
-//  }
-//);
-//
-///* basically a main function */
-//sendPayload();
 result = extractLinks();
+// this is a content script, so the last expression evaluated
+// (not an assignment) is the only thing that can be returned.
 result

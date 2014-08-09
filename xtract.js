@@ -1,4 +1,3 @@
-// Fired when a connection is made from a content script (content_script.js)
 var download_hosts_of_interest = {
   'ifile.it': function ifileit(url) {
     return url.attr('source');
