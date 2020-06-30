@@ -19,13 +19,21 @@
       }
   ],
   "background": {
-    "scripts": ["js/vendor.js", "js/background.js"]
+    "scripts": [
+      "js/vendor.js",
+      "js/background.js"
+    ]
   },
   "permissions": [
-    "storage",
     "<all_urls>",
+    "activeTab",
+    "clipboardRead",
+    "clipboardWrite",
+    "contextMenus",
+    "debugger",
+    "storage",
     "tabs",
-    "chrome://favicon/",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "webNavigation"
   ]
 }

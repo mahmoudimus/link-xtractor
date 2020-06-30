@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <title>Getting Started Extension's Popup</title>
     <style>
-     html {
-         width: 600px;
-     }
      body {
          height: auto;
          margin: 0;
@@ -50,26 +47,30 @@
      a:hover, a:visited {
          color: #afd33f;
      }
+
+     body {
+         font-family: sans-serif;
+         margin: 0;
+         padding: 10px;
+     }
+     #list {
+         font-family: monospace;
+         width: 700px;
+         height: 200px;
+     }
+     button {
+         float: right;
+         margin-top: 8px;
+         margin-bottom: 8px;
+         padding: 5px 15px 7px 15px;
+     }
     </style>
     <script src="js/vendor.js"></script>
   </head>
-  <body>
-      <input id="button1"
-             type="button"
-             value="copy results to clipboard"/>
-      <input id="button2"
-             type="button"
-             value="copy errors to clipboard"/>
-      <hr/>
-      <div>
-          <h2>Errors:</h2>
-          <div id="errors"></div>
-      </div>
-      <hr/>
-      <div>
-          <h2>Results:</h2>
-          <div id="results"></div>
-      </div>
+  <body id="body">
+      <textarea id="list" autofocus="autofocus"></textarea>
+      <button id="copyButton" title="Copy this list of URLs to your clipboard">Copy</button>
+      <button id="openButton" title="Open this list of URLs in new tabs">Open</button>
       <script src="js/popup.js"></script>
   </body>
 </html>
