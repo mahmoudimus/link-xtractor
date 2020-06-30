@@ -1,8 +1,11 @@
+/*
+  This is the pop up window that comes up from the chrome extension
+ */
 import * as moment from 'moment';
 import * as $ from 'jquery';
 
 
-function copyToClipboard(text: string, callback: (x:string) => void){
+export function copyToClipboard(text: string, callback: (x:string) => void){
     if (text == null) return;
     const input = document.createElement('textarea');
     input.value = text;
@@ -14,203 +17,116 @@ function copyToClipboard(text: string, callback: (x:string) => void){
 }
 
 
-function copy2cb(id) {
-    const text = document.getElementById(id).innerText;
+export function copy2cb(id) {
+    const text = document.getElementById(id).textContent;//innerText;
+    console.log('txt to copy: ', text);
     copyToClipboard(text, (x) => x);
 }
 
 
-var download_hosts_of_interest = {
-  'ifile.it': function ifileit(url) {
-    return url.attr('source');
-  },
-  'filesonic.com': function filesonic(url) {
-    // if the url starts with /file, its downloadable
-    if (url.attr('path') !== null &&
-      url.attr('path').indexOf('/file') === 0) {
-      return url.attr('source');
-    }
-    // else return null
-    return null;
-  },
-  'filepost.com': function filepost(url) {
-    // if the url starts with /file, its downloadable
-    if (url.attr('path') !== null &&
-      url.attr('path').indexOf('/files') === 0) {
-      return url.attr('source');
-    }
-    // else return null
-    return null;
-  },
-  'fp.io': function filepost(url) {
-    return url.attr('source');
-  },
-  'rapidshare.com': function rapidshare(url) {
-    return url.attr('source');
-  },
-  'uploaded.net': function uploaded(url) {
-    return url.attr('source');
-  },
-  'ul.to': function uploaded(url) {
-    return 'uploaded.net/file' + url.attr('path');
-  },
-  'ryushare.com': function uploaded(url) {
-    return url.attr('source');
-  },
-  'livefile.org': function uploaded(url) {
-    return url.attr('source');
-  },
-  'k2s.cc': function uploaded(url) {
-    return url.attr('source');
-  },
-  'keep2share.cc': function uploaded(url) {
-    return url.attr('source');
-  }
-};
+// add string trim function
+String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g, ''); }
 
-function noDownloadableLink(location) {
-  $('#errors').html(function (index, old_html) {
-      return old_html + '<br>' + location;
-  });
+export function isProbablyUrl(string) {
+    var substr = string.substring(0,4).toLowerCase();
+    if (substr == 'ftp:' || substr == 'www.') return true;
+
+    var substr = string.substring(0,5).toLowerCase();
+    if (substr == 'http:') return true;
+
+    var substr = string.substring(0,6).toLowerCase();
+    if (substr == 'https:') return true;
+
+    var substr = string.substring(0,7).toLowerCase();
+    if (substr == 'chrome:') return true;
+
+    return false;
 }
 
-function appendURL(link) {
-  $('#results').html(function (index, old_html) {
-      return old_html + '<br>' + link;
-  });
-}
+export function openList(list) {
+    var strings = list.split(/\r\n|\r|\n/);
 
-chrome.runtime.onConnect.addListener(function (port) {
-  port.onMessage.addListener(handleExtractedText);
-});
+    for (var i=0; i<strings.length; i++) {
+        // check empty
+        strings[i] = strings[i].trim();
+        if (strings[i] == '') continue;
 
+        var url = strings[i];
 
-function handleExtractedText(message) {
-  console.log(message);
-  var location = message.loc;
-  var extracted_urls = message.result;
-  var downloadable_link = null;
-  var url;
-  var host;
-  var added = false;
-
-  for (var u = 0; u < extracted_urls.length; ++u) {
-    const url = new URL(extracted_urls[u]);
-    host = url.host.replace('www.', '');
-
-    /* We check to see if the url has a host that's interesting to us */
-    if (download_hosts_of_interest.hasOwnProperty(host) === true &&
-        downloadable_link === null)
-    {
-      downloadable_link = download_hosts_of_interest[host](url);
-
-      if (downloadable_link !== null)
-      {
-        if(downloadable_link.indexOf('http') != 0) {
-          downloadable_link = 'http://' + downloadable_link;
+        if (!isProbablyUrl(url)) {
+            // if it looks like a URL we'll open it, otherwise we will do a Google search on it
+            url = 'http://www.google.com/search?q=' + encodeURI(url);
         }
-        appendURL([
-          downloadable_link,
-          message.metadata,
-          message.title
-        ].join(','));
-        downloadable_link = null;
-        added = true;
-      }
+
+        //open the new tab
+        chrome.tabs.create({'url':url,'selected':false});
     }
-    /*
-     This case handles urls that are are part of a ?url= parameter
-     It also ensure that downloadable link hasn't been set.
-     */
-    else if (url.href !== null && downloadable_link === null) {
-      const url_ = new URL(url.href);
-      host = url_.host.replace('www.', '');
-      if (download_hosts_of_interest.hasOwnProperty(host) === true) {
-        downloadable_link = download_hosts_of_interest[host](url_);
-      }
-    }
-
-  } //end for
-
-  // check to see if the downloadable link had something
-  if (downloadable_link == null && added === false) {
-    noDownloadableLink([
-      location,
-      message.metadata,
-      message.title
-    ].join(','));
-  }
-
-
-} // end addListener
-function onLoad() {
-
-  chrome.storage.sync.get('interesting_hosts', function (data) {
-    var hosts_of_interest = data['interesting_hosts'] || [];
-    // for all the tabs in the current window
-    chrome.windows.getAll({
-        populate: true
-      },
-      function handleWindows(windows) {
-        var url = null
-          , current_tab = null;
-        for (var i = 0; i < windows.length; ++i) {
-          for (var j = 0; j < windows[i].tabs.length; ++j) {
-            current_tab = windows[i].tabs[j];
-            const url = new URL(current_tab.url);
-            // if we're not interested in this url, continue
-            if (hosts_of_interest.indexOf(url.host) === -1) {
-              continue;
-            }
-            chrome.tabs.executeScript(
-              current_tab.id,
-              {file: "content_script.js"},
-              function (r) {
-                handleExtractedText(r[0]);
-              });
-          } // end for (j)
-        } // end for (i)
-      });
-  });
 }
 
+export function openTextAreaList() {
+    openList(document.getElementById("list").textContent);
+}
 
-$(window).on("load", onLoad);
+export function copyTextAreaList() {
+    alert("fasdd");
+    console.log("got here");
+    copy2cb("list");
+}
 
-let count: number  = 0;
 
 $(function() {
+    chrome.windows.getCurrent(function(window) {
+        chrome.tabs.query({windowId: window.id}, function(tabs) {
+            if (!tabs.length) return;
 
-  const queryInfo = {
-    active: true,
-    currentWindow: true
-  };
+            const listTextArea = $("#list");
+            const urlList : string[] = new Array<string>();
+            for (var i=0; i<tabs.length; ++i) {
+                console.log(tabs[i].url);
+                urlList.push(tabs[i].url);
+            }
 
-  chrome.tabs.query(queryInfo, function(tabs) {
-    $('#url').text(tabs[0].url);
-    $('#time').text(moment().format('YYYY-MM-DD HH:mm:ss'));
-  });
-
-  chrome.browserAction.setBadgeText({text: count.toString()});
-  $('#countUp').click(()=>{
-    chrome.browserAction.setBadgeText({text: (++count).toString()});
-  });
-
-  $('#changeBackground').click(()=>{
-      // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      chrome.tabs.query(queryInfo, (tabs) => {
-          chrome.tabs.sendMessage(tabs[0].id, {color: '#555555'},(msg) => {
-              console.log("result message:", msg);
-          });
-      });
-  });
-    $('#button1').click(()=> {
-        console.log('lolol');
-        return copy2cb('results');
+            listTextArea.text(() => urlList.join('\n'));
+            if (location.search != "?focusHack") location.search = "?focusHack";
+            listTextArea.select();
+        });
     });
-    $('#button2').click(()=> {
-        console.log('this bitch is ready');
-        return copy2cb('errors');
-    });
+
+    $("openButton").click(openTextAreaList);//
+    $("copyButton").click(copyTextAreaList);
+
+
+  // const queryInfo = {
+  //   active: true,
+  //   currentWindow: true
+  // };
+
+
+  // chrome.tabs.query(queryInfo, function(tabs) {
+  //   $('#url').text(tabs[0].url);
+  //   $('#time').text(moment().format('YYYY-MM-DD HH:mm:ss'));
+  // });
+
+  // chrome.browserAction.setBadgeText({text: count.toString()});
+  // $('#countUp').click(()=>{
+  //   chrome.browserAction.setBadgeText({text: (++count).toString()});
+  // });
+
+  // $('#changeBackground').click(()=>{
+  //     // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+  //     chrome.tabs.query(queryInfo, (tabs) => {
+  //         chrome.tabs.sendMessage(tabs[0].id, {color: '#555555'},(msg) => {
+  //             console.log("result message:", msg);
+  //         });
+  //     });
+  // });
+  //   $('#button1').click(()=> {
+  //       console.log('lolol');
+  //       return copy2cb('results');
+  //   });
+  //   $('#button2').click(()=> {
+  //       console.log('this bitch is ready');
+  //       return copy2cb('errors');
+  //   });
 
 });
