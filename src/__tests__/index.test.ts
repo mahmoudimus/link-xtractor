@@ -109,7 +109,7 @@ afterAll(async () => {
     await browser.close();
 });
 
-describe("App", () => {
+describe.skip("App", () => {
   test("Example", async () => {
     // Example for starting a video.
     await page.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
@@ -120,4 +120,12 @@ describe("App", () => {
     await page.waitFor(1000);
     await page.screenshot({ path: "./screenshots/002_video_started.png" });
   }, 60000);
+});
+
+describe("Extension popup", () => {
+    test("Go to popup.html", async () => {
+        await page.goto(`chrome-extension://${extension_id(CRX_PATH)}/popup.html`);
+        const content = await page.content();
+        console.log(content);
+    }, 60000);
 });
