@@ -3,8 +3,9 @@ FROM node:14-slim
 
 # Disable puppeteer chromium installation.
 # We will use the actual chrome installation.
+WORKDIR /app
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
-ENV PATH="${PATH}:/node_modules/.bin"
+ENV PATH="${PATH}:/app/node_modules/.bin"
 
 # Install xvfb and any dependencies of it as well as
 # the puppeteer ones. By default no display is present
@@ -27,12 +28,14 @@ RUN apt-get update -qq \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update -qq \
     && apt-get install -y google-chrome-unstable --no-install-recommends \
+    && mkdir -p /app \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Puppeteer under /node_modules so it's available system-wide.
-ADD package.json package-lock.json /
-RUN npm install
-
+ADD package.json package-lock.json /app/
+RUN cd /app && npm install
+VOLUME /app
+EXPOSE 9223
 # ------------------------------------------------------------
 # The following commands can be changed as desired. Here mocha
 # is used to execute js-files. Just make sure to wrap the

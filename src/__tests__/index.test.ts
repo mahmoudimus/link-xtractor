@@ -111,16 +111,13 @@ afterAll(async () => {
 
 describe("App", () => {
   test("Example", async () => {
-    // Overwrite default mocha test execution time of 2s.
-    this.timeout(60000);
-
     // Example for starting a video.
     await page.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
     await page.waitFor(1000);
-    await page.screenshot({ path: "/screenshots/001_video_stopped.png" });
+    await page.screenshot({ path: "./screenshots/001_video_stopped.png" });
     await page.waitFor("#player");
     await page.click("#player");
     await page.waitFor(1000);
-    await page.screenshot({ path: "/screenshots/002_video_started.png" });
-  });
+    await page.screenshot({ path: "./screenshots/002_video_started.png" });
+  }, 60000);
 });
