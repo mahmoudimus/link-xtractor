@@ -5,9 +5,9 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - "./tests:/tests"
+      - "./src:/src"
+      - "./dist:/crx"
       - "./screenshots:/screenshots"
       - "./node_modules:/node_modules"
       - "./package.json:/package.json"
       - "./package-lock.json:/package-lock.json"
-      - "./dist:/crx"

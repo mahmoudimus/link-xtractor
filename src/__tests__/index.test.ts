@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as puppeteer from 'puppeteer';
 import * as path from 'path';
+import {extension_id} from '../utils';
 
 
 let browser;
@@ -18,7 +19,7 @@ async function waitSeconds(seconds) {
 }
 
 
-before(async () => {
+beforeAll(async () => {
   browser = await puppeteer.launch({
     // Use maximum available resolution.
     defaultViewport: null,
@@ -100,12 +101,16 @@ afterEach(async () => {
   await page.close();
 });
 
-after(async () => {
-  await browser.close();
+afterAll(async () => {
+    if(!browser) {
+        // https://basarat.gitbook.io/typescript/type-system/exceptions
+        throw new Error("browser is undefined, is puppeteer installed?");
+    }
+    await browser.close();
 });
 
 describe("App", () => {
-  it("Example", async function () {
+  test("Example", async () => {
     // Overwrite default mocha test execution time of 2s.
     this.timeout(60000);
 

@@ -2,7 +2,6 @@
   "name": "link-xtractor",
   "version": "1.0.0",
   "description": "chrome-extension to extract links from a site",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
@@ -13,7 +12,6 @@
     "type-check": "tsc --noEmit",
     "type-check:watch": "npm run type-check -- --watch"
   },
-
   "author": "mahmoudimus",
   "license": "MIT",
   "repository": {
@@ -32,7 +30,7 @@
     "@babel/preset-env": "^7.10.3",
     "@babel/preset-typescript": "^7.10.1",
     "@types/chrome": "0.0.100",
-    "@types/jest": "^25.1.4",
+    "@types/jest": "^25.2.3",
     "@types/jquery": "^3.3.33",
     "@types/mocha": "^7.0.2",
     "copy-webpack-plugin": "^5.1.1",
