@@ -51,4 +51,4 @@ RUN npm install
 # Replace "mocha --recursive /tests"
 # with the startup command of your application
 # if you replace mocha.
-CMD xvfb-run --server-args="-screen 0 1024x768x24" mocha --recursive -r ts-node/register -r ignore-styles /tests
+CMD xvfb-run --server-args="-screen 0 1024x768x24" npx jest

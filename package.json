@@ -8,7 +8,7 @@
     "build": "webpack --config webpack/webpack.prod.js",
     "clean": "rimraf dist",
     "test": "npx jest",
-    "xvfb-tests": "xvfb-run --server-args='-screen 0 1024x768x24'  mocha --recursive -r ts-node/register -r ignore-styles /tests",
+    "xvfb-tests": "xvfb-run --server-args='-screen 0 1024x768x24' npx jest",
     "type-check": "tsc --noEmit",
     "type-check:watch": "npm run type-check -- --watch"
   },
