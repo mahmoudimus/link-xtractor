@@ -1,5 +1,4 @@
 import * as crypto from 'crypto';
-const hash = crypto.createHash('sha256');
 
 type ExtensionPath =
     | crypto.BinaryLike
@@ -16,6 +15,7 @@ function chr(input: number): string {
 
 
 export function extension_id(path: ExtensionPath) : string {
+    const hash = crypto.createHash('sha256');
     let algo = new Array<string>();
     let digest: string = hash.update(path).digest('hex');
     for (let i = 0; i < 32; i++) {

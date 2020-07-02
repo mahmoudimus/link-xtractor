@@ -86,13 +86,16 @@ $(function() {
                 urlList.push(tabs[i].url);
             }
 
-            listTextArea.text(() => urlList.join('\n'));
+            if(urlList.length > 0) {
+                listTextArea.text(() => urlList.join('\n'));
+            }
+            listTextArea.focus();
             if (location.search != "?focusHack") location.search = "?focusHack";
             listTextArea.select();
         });
     });
 
-    $("openButton").click(openTextAreaList);//
+    $("openButton").click(openTextAreaList);
     $("copyButton").click(copyTextAreaList);
 
 

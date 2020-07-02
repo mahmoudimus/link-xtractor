@@ -6,7 +6,10 @@ import {extension_id} from '../utils';
 
 let browser;
 let page;
+//check if the page redirects
+let wasRedirected = false;
 
+const pageErrors = [];
 const secondsForExtensionToLoad = 1;
 const CRX_PATH = '/crx';
 
@@ -16,6 +19,14 @@ async function waitSeconds(seconds) {
     return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
   }
   await delay(seconds);
+}
+
+
+// https://stackoverflow.com/a/17306971/133514
+function clearArray<T>(array: T[]) {
+    while (array.length) {
+        array.pop();
+    }
 }
 
 
@@ -53,7 +64,7 @@ beforeAll(async () => {
 
 
 beforeEach(async () => {
-  page = await browser.newPage();
+  page = await browser.newPage(); // this starts a blank page with about:blank
 
   // Prevent certain pages from not delivering the content
   // i.e. videos, images etc.
@@ -70,7 +81,8 @@ beforeEach(async () => {
   });
 
   await page.on("pageerror", pageerr => {
-    console.error(tagError + "pageerr: " + pageerr);
+      console.error(tagError + "pageerr: " + pageerr);
+      pageErrors.push(pageerr);
   });
 
   await page.on("requestfailed", rf => {
@@ -82,7 +94,12 @@ beforeEach(async () => {
   });
 
   await page.on("response", response => {
+    const status = response.status()
     const url = response.url();
+    //[301, 302, 303, 307, 308]
+    if ((status >= 300) && (status <= 399)) {
+        wasRedirected = true;
+    }
 
     response.buffer().then(
       buffer => {
@@ -98,7 +115,9 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  await page.close();
+    await page.close();
+    clearArray(pageErrors);
+    wasRedirected = false;
 });
 
 afterAll(async () => {
@@ -123,9 +142,44 @@ describe.skip("App", () => {
 });
 
 describe("Extension popup", () => {
+    // eslint-disable-next-line no-console
+    // tslint-disable-next-line no-console
+    console.log(`\n✨ Make sure extension is in ${CRX_PATH}!`);
+
     test("Go to popup.html", async () => {
-        await page.goto(`chrome-extension://${extension_id(CRX_PATH)}/popup.html`);
-        const content = await page.content();
-        console.log(content);
+        await page.goto(
+            `chrome-extension://${extension_id(CRX_PATH)}/popup.html`, {
+                timeout: 0,
+                waitUntil: 'networkidle2'
+            });
+        if (wasRedirected) {
+            //if page redireced , we wait for navigation end
+            await page.waitForNavigation({
+                waitUntil: 'domcontentloaded'
+            })
+        };
+
+        const el = await page.$("#list");
+        const textArea = await page.evaluate(node => node.innerHTML, el);
+        await el.dispose();
+        /*
+          The expected behavior here is there is at least one tab open for the
+          browser to remain open.
+
+          If you use await browser.pages upon launching the browser, that will
+          return all the pages open currently, which should be 1 about:blank page.
+          https://github.com/puppeteer/puppeteer/issues/2040#issuecomment-366295221
+        */
+        let textAreas: string[] = textArea.split('\n');
+        assert.equal(textAreas.length, 2);
+        assert.equal(pageErrors.length, 0);
+        //const content = await page.content();
+        //console.log(content);
+
+        expect(textAreas[0])
+            .toBe(`about:blank`);
+        expect(textAreas[1])
+            .toBe(`chrome-extension://${extension_id(CRX_PATH)}/popup.html?focusHack`);
+
     }, 60000);
 });
