@@ -64,12 +64,6 @@ beforeAll(async () => {
 
   await waitSeconds(secondsForExtensionToLoad); // give extension time to load
   const browserVersion = await browser.version();
-  // const context = browser.defaultBrowserContext();
-  // context.clearPermissionOverrides();
-  // context.overridePermissions("*", [
-  //     'clipboard-write',
-  //     'clipboard-read',
-  // ]);
   console.log(`Started ${browserVersion}`);
 });
 
@@ -79,19 +73,6 @@ afterAll(async () => {
         throw new Error("browser is undefined, is puppeteer installed?");
     }
     await browser.close();
-});
-
-describe.skip("App", () => {
-  test("Example", async () => {
-    // Example for starting a video.
-    await page.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-    await page.waitFor(1000);
-    await page.screenshot({ path: "./screenshots/001_video_stopped.png" });
-    await page.waitFor("#player");
-    await page.click("#player");
-    await page.waitFor(1000);
-    await page.screenshot({ path: "./screenshots/002_video_started.png" });
-  }, 60000);
 });
 
 describe("Extension popup", () => {
@@ -152,15 +133,8 @@ describe("Extension popup", () => {
         await page.on("console", (event: puppeteer.ConsoleMessage, ...args: any[]) => {
             console.log(event.text(), event.type(), event.location());
             for (let i = 0; i < args.length; ++i) console.log(`${i}: ${args[i]}`);
-            //console.log("debug: ", event.args());
         });
-        // await page.on("console", msg => {
-        //     let args = msg._args || msg.args;
-        //     for (let i = 0; i < args.length; ++i) {
-        //         console.log(`${i}: ${args[i]}`);
-        //     }
-        //     console[msg._type]('PAGE LOG:', msg._text);
-        // });
+
     })
 
     afterEach(async () => {
@@ -170,7 +144,7 @@ describe("Extension popup", () => {
     });
 
 
-    test.skip("Go to popup.html", async () => {
+    test("Go to popup.html", async () => {
         await page.goto(
             `chrome-extension://${extension_id(CRX_PATH)}/popup.html`, {
                 timeout: 0,
@@ -221,99 +195,20 @@ describe("Extension popup", () => {
 
         await page.evaluate(() => document.querySelector('#copyButton').scrollIntoView());
         await page.waitForSelector('.jsloaded');
-        const clicked = await click('#copyButton');
+        await click('#copyButton');
 
-        const pastedText = clipboardy.readSync();
-        console.log(pastedText);
+        const clipboardText = clipboardy.readSync();
+        console.log(clipboardText);
 
-        //await page.screenshot({ path: "./screenshots/01-A-debug.png" });
-        // //await page.focus();
-        // // const pastedText = await page.evaluate(() => {
-        // //     this.focus();
-        // //     return navigator.clipboard.readText();
-        // // });
+        let textAreas: string[] = clipboardText.split('\n');
+        assert.equal(textAreas.length, 2);
 
-
-        // // let el = document.createElement('div');
-        // // el.innerHTML = '<textarea id="pasteid" class="pastebox"></textarea>';
-        // // document.body.appendChild(el.firstChild);
-
-        const docHdl = await page.evaluateHandle('document');
-        const pasted = await page.evaluate(async () => {
-            let el = document.createElement('div');
-            el.innerHTML = '<textarea id="pasteid" class="pastebox"></textarea>';
-            document.body.appendChild(el.firstChild);
-            return document.getElementById('pasteid');
-        },docHdl);
-
-        //const el2 = await page.evaluateHandle(() => document.activeElement);
-        //console.log(await el2.type('message'));
-        const foo2  = await page.evaluate(`(async () => {
-        let foo = document.getElementById('pasteid');
-        foo.focus();
-        foo.select();
-        if(document.execCommand('paste')) {
-            console.log('paste = true:', foo.innerHTML);
-        }
-        })()`
-        ,docHdl);
-        await docHdl.dispose();
-
-        //console.log(document.getElementById('pasteid').textContent);
-        //`(async () => {; console.log('manchu: ', foo);})()`
-
-//             `(window.navigator.clipboard.readText()
-// .then(text => {
-// console.warn("timeout >>: ", text);
-// document.getElementById("pasteid").innerText = text;
-// })
-// .catch((e) => console.log(e.message));)()`
-            // return document.getElementById("pasteid").innerText;
-            //document.getElementById('pasteid').focus();
-        //`(async () => await navigator.clipboard.readText())()`,
-        // },docHdl);
-        //console.log('What are the contents?', contents);
-        // const contents = await page.evaluate(document => {
-        //     let el = document.createElement('div');
-        //     el.innerHTML = '<div id="pasteid" class="pastebox"></div>';
-        //     document.body.appendChild(el.firstChild);
-        //     const paste = document.getElementById('pasteid');
-        //     paste.focus();
-        //     document.execCommand('paste');
-        //     return paste.textContent;
-        // }, docHdl);
-        // await docHdl.dispose();
+        expect(textAreas[0])
+            .toBe(`about:blank`);
+        expect(textAreas[1])
+            .toBe(`chrome-extension://${extension_id(CRX_PATH)}/popup.html`);
 
 
-
-
-        // await Promise.all([
-        //     page.waitForNavigation(),
-        //     page.waitForSelector('button[id="copyButton"]', {visible: true}),
-        //     page.click('button[id="copyButton"]'),
-        // ]).catch(err => console.log(err.message));
-        //const resp = await page.$eval('#copyButton', elem => elem.click());
-        // // await page.evaluate((INPUT_SELECTOR) => {
-        // //     return INPUT_SELECTOR.click();
-        // // }, button);
-        // // await page.click('#copyButton')
-        // //     .catch(e => console.log(e));
-        // //console.log(button);
-        // await page.screenshot({ path: "./screenshots/01-debug.png" });
-        // //await page.click('button[id="copyButton"]');
-
-        // const documentHandle = await page.evaluateHandle('document');
-        // const contents = await page.evaluate(document => document.execCommand('paste'), documentHandle);
-
-        // await documentHandle.dispose();
-        // await el.dispose();
-
-        // console.log('What are the contents?', contents);
-
-        // console.log('Pasted content: ', clipboardText);
-        //const clipboardText = getClipboardContents();
-        //console.log(clipboardText);
-        //expect(clipboardText).toBeTruthy
     }, 10000);
 });
 
