@@ -33,16 +33,15 @@ function showTabCount() {
 function updateBadgeText() {
     if (showTabCount()) {
         let val: number = 0;
-        const queryInfo: chrome.tabs.QueryInfo = {currentWindow: true, active: true};
+        const queryInfo: chrome.tabs.QueryInfo = {currentWindow: true};
         chrome.tabs.query(queryInfo, (result: chrome.tabs.Tab[]) :void => {
             val = result.length;
+            chrome.browserAction.setBadgeText({text: val.toString()});
         });
-        chrome.browserAction.setBadgeText({text: val + ""});
     } else {
         chrome.browserAction.setBadgeText({text: ""});
     }
 }
-
 
 chrome.runtime.onInstalled.addListener(function(details) {
     /*
@@ -67,10 +66,10 @@ chrome.runtime.onInstalled.addListener(function(details) {
     });
 });
 
-function polling() {
-    console.log('polling');
-    updateBadgeText();
-    setTimeout(polling, 1000 * 30);
-}
 
-polling();
+chrome.tabs.onCreated.addListener(updateBadgeText);
+chrome.tabs.onRemoved.addListener(updateBadgeText);
+chrome.tabs.onReplaced.addListener(updateBadgeText);
+chrome.windows.onFocusChanged.addListener(updateBadgeText);
+
+updateBadgeText();
