@@ -1,71 +1,23 @@
-# Chrome Extension TypeScript Starter
+# link-xtractor
 
-[![Build Status](https://travis-ci.org/chibat/chrome-extension-typescript-starter.svg?branch=master)](https://travis-ci.org/chibat/chrome-extension-typescript-starter)
+A Google Chrome plugin that traverses all open tabs, targets a list of configurable hosts (set via options), and scrapes some metadata associated with them.
 
-Chrome Extension, TypeScript and Visual Studio Code
+## Code Quality
 
-## Prerequisites
+This is probably the worst project in terms of code quality that I have available. I've developed it a while ago and I decided to spruce it up for putting Github. So, obligatory, "THERE BE DRAGONS."
 
-* [node + npm](https://nodejs.org/) (Current Version)
+## Purpose
 
-## Option
+I needed a way to scrape some fields of specific sites and it was much easier to do it via Chrome's plugin system that writing a scraper in Python or something else.
 
-* [Visual Studio Code](https://code.visualstudio.com/)
+## License
 
-## Includes the following
+`link-xtractor` is a MIT/BSD/Apache2 triple-licensed library.
 
-* TypeScript
-* Webpack
-* Moment.js
-* jQuery
-* Jest
-* Example Code
-    * Chrome Storage
-    * Options Version 2
-    * content script
-    * count up badge number
-    * background
+## Contribute
 
-## Project Structure
+If you have a good idea for this project, just open up an issue and I'll update this with a proper contribution guideline.
 
-* src/typescript: TypeScript source files
-* src/assets: static files
-* dist: Chrome Extension directory
-* dist/js: Generated JavaScript files
+## Contributors
 
-## Setup
-
-```
-npm install
-```
-
-## Import as Visual Studio Code project
-
-...
-
-## Build
-
-```
-npm run build
-```
-
-## Build in watch mode
-
-### terminal
-
-```
-npm run watch
-```
-
-### Visual Studio Code
-
-Run watch mode.
-
-type `Ctrl + Shift + B`
-
-## Load extension to chrome
-
-Load `dist` directory
-
-## Test
-`npx jest` or `npm run test`
+[@mahmoudimus](https://github.com/mahmoudimus)
