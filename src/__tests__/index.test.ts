@@ -1,6 +1,8 @@
+import * as $ from 'jquery';
 import * as assert from 'assert';
-import * as puppeteer from 'puppeteer';
 import * as path from 'path';
+import * as puppeteer from 'puppeteer';
+import * as clipboardy from 'clipboardy';
 import {extension_id} from '../utils';
 
 
@@ -21,14 +23,12 @@ async function waitSeconds(seconds) {
   await delay(seconds);
 }
 
-
 // https://stackoverflow.com/a/17306971/133514
 function clearArray<T>(array: T[]) {
     while (array.length) {
         array.pop();
     }
 }
-
 
 beforeAll(async () => {
   browser = await puppeteer.launch({
@@ -38,12 +38,17 @@ beforeAll(async () => {
     headless: false,
     // show devtools
     devtools: true,
-    // ignoreDefaultArgs: true,
+      // ignoreDefaultArgs: true,
+    ignoreHTTPSErrors: true,
     // Use the actual chrome installation.
     executablePath: "/usr/bin/google-chrome-unstable",
     args: [
       // Required for Docker version of Puppeteer.
       "--no-sandbox",
+      // https://github.com/puppeteer/puppeteer/issues/3339#issuecomment-609101772
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
       "--disable-setuid-sandbox",
       // This will write shared memory files into /tmp instead of /dev/shm,
       // because Docker’s default for /dev/shm is 64MB.
@@ -59,65 +64,13 @@ beforeAll(async () => {
 
   await waitSeconds(secondsForExtensionToLoad); // give extension time to load
   const browserVersion = await browser.version();
+  // const context = browser.defaultBrowserContext();
+  // context.clearPermissionOverrides();
+  // context.overridePermissions("*", [
+  //     'clipboard-write',
+  //     'clipboard-read',
+  // ]);
   console.log(`Started ${browserVersion}`);
-});
-
-
-beforeEach(async () => {
-  page = await browser.newPage(); // this starts a blank page with about:blank
-
-  // Prevent certain pages from not delivering the content
-  // i.e. videos, images etc.
-  page.setUserAgent("Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A403 Safari/8536.25");
-
-  // Simple tags for formatting the output.
-  const tagIndentation = "    ";
-  const tagError = tagIndentation + "ERROR ";
-  const tagRequest = tagIndentation + "REQUEST ";
-  const tagResponse = tagIndentation + "RESPONSE ";
-
-  await page.on("error", err => {
-    console.error(tagError + "err: " + err);
-  });
-
-  await page.on("pageerror", pageerr => {
-      console.error(tagError + "pageerr: " + pageerr);
-      pageErrors.push(pageerr);
-  });
-
-  await page.on("requestfailed", rf => {
-    console.error(tagError + "requestfailed: " + rf);
-  });
-
-  await page.on("request", (request) => {
-    console.log(tagRequest + request.url());
-  });
-
-  await page.on("response", response => {
-    const status = response.status()
-    const url = response.url();
-    //[301, 302, 303, 307, 308]
-    if ((status >= 300) && (status <= 399)) {
-        wasRedirected = true;
-    }
-
-    response.buffer().then(
-      buffer => {
-        if (response.status() != 200) {
-          console.log(tagResponse + url + " : " + response.status());
-        }
-      },
-      error => {
-        console.error(tagResponse + "ERROR " + url + " : " + response.status());
-      }
-    );
-  });
-})
-
-afterEach(async () => {
-    await page.close();
-    clearArray(pageErrors);
-    wasRedirected = false;
 });
 
 afterAll(async () => {
@@ -144,9 +97,80 @@ describe.skip("App", () => {
 describe("Extension popup", () => {
     // eslint-disable-next-line no-console
     // tslint-disable-next-line no-console
-    console.log(`\n✨ Make sure extension is in ${CRX_PATH}!`);
+    console.log(`\n✨Make sure extension is in ${CRX_PATH}!`);
 
-    test("Go to popup.html", async () => {
+    beforeEach(async () => {
+        page = await browser.newPage(); // this starts a blank page with about:blank
+
+        // Prevent certain pages from not delivering the content
+        // i.e. videos, images etc.
+        page.setUserAgent("Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A403 Safari/8536.25");
+
+        // Simple tags for formatting the output.
+        const tagIndentation = "    ";
+        const tagError = tagIndentation + "ERROR ";
+        const tagRequest = tagIndentation + "REQUEST ";
+        const tagResponse = tagIndentation + "RESPONSE ";
+
+        await page.on("error", err => {
+            console.error(tagError + "err: " + err);
+        });
+
+        await page.on("pageerror", pageerr => {
+            console.error(tagError + "pageerr: " + pageerr);
+            pageErrors.push(pageerr);
+        });
+
+        await page.on("requestfailed", rf => {
+            console.error(tagError + "requestfailed: " + rf);
+        });
+
+        await page.on("request", (request) => {
+            console.log(tagRequest + request.url());
+        });
+
+        await page.on("response", response => {
+            const status = response.status()
+            const url = response.url();
+            //[301, 302, 303, 307, 308]
+            if ((status >= 300) && (status <= 399)) {
+                wasRedirected = true;
+            }
+
+            response.buffer().then(
+                buffer => {
+                    if (response.status() != 200) {
+                        console.log(tagResponse + url + " : " + response.status());
+                    }
+                },
+                error => {
+                    console.error(tagResponse + "ERROR " + url + " : " + response.status());
+                }
+            );
+        });
+
+        await page.on("console", (event: puppeteer.ConsoleMessage, ...args: any[]) => {
+            console.log(event.text(), event.type(), event.location());
+            for (let i = 0; i < args.length; ++i) console.log(`${i}: ${args[i]}`);
+            //console.log("debug: ", event.args());
+        });
+        // await page.on("console", msg => {
+        //     let args = msg._args || msg.args;
+        //     for (let i = 0; i < args.length; ++i) {
+        //         console.log(`${i}: ${args[i]}`);
+        //     }
+        //     console[msg._type]('PAGE LOG:', msg._text);
+        // });
+    })
+
+    afterEach(async () => {
+        await page.close();
+        clearArray(pageErrors);
+        wasRedirected = false;
+    });
+
+
+    test.skip("Go to popup.html", async () => {
         await page.goto(
             `chrome-extension://${extension_id(CRX_PATH)}/popup.html`, {
                 timeout: 0,
@@ -159,9 +183,11 @@ describe("Extension popup", () => {
             })
         };
 
+
         const el = await page.$("#list");
         const textArea = await page.evaluate(node => node.innerHTML, el);
         await el.dispose();
+
         /*
           The expected behavior here is there is at least one tab open for the
           browser to remain open.
@@ -173,13 +199,126 @@ describe("Extension popup", () => {
         let textAreas: string[] = textArea.split('\n');
         assert.equal(textAreas.length, 2);
         assert.equal(pageErrors.length, 0);
-        //const content = await page.content();
-        //console.log(content);
 
         expect(textAreas[0])
             .toBe(`about:blank`);
         expect(textAreas[1])
-            .toBe(`chrome-extension://${extension_id(CRX_PATH)}/popup.html?focusHack`);
+            .toBe(`chrome-extension://${extension_id(CRX_PATH)}/popup.html`);
+    }, 10000);
 
-    }, 60000);
+    test("Copy button", async () => {
+        await page.goto(
+            `chrome-extension://${extension_id(CRX_PATH)}/popup.html`, {
+                timeout: 0,
+                waitUntil: 'networkidle2'
+            });
+        if (wasRedirected) {
+            //if page redireced , we wait for navigation end
+            await page.waitForNavigation({
+                waitUntil: 'domcontentloaded'
+            })
+        };
+
+        await page.evaluate(() => document.querySelector('#copyButton').scrollIntoView());
+        await page.waitForSelector('.jsloaded');
+        const clicked = await click('#copyButton');
+
+        const pastedText = clipboardy.readSync();
+        console.log(pastedText);
+
+        //await page.screenshot({ path: "./screenshots/01-A-debug.png" });
+        // //await page.focus();
+        // // const pastedText = await page.evaluate(() => {
+        // //     this.focus();
+        // //     return navigator.clipboard.readText();
+        // // });
+
+
+        // // let el = document.createElement('div');
+        // // el.innerHTML = '<textarea id="pasteid" class="pastebox"></textarea>';
+        // // document.body.appendChild(el.firstChild);
+
+        const docHdl = await page.evaluateHandle('document');
+        const pasted = await page.evaluate(async () => {
+            let el = document.createElement('div');
+            el.innerHTML = '<textarea id="pasteid" class="pastebox"></textarea>';
+            document.body.appendChild(el.firstChild);
+            return document.getElementById('pasteid');
+        },docHdl);
+
+        //const el2 = await page.evaluateHandle(() => document.activeElement);
+        //console.log(await el2.type('message'));
+        const foo2  = await page.evaluate(`(async () => {
+        let foo = document.getElementById('pasteid');
+        foo.focus();
+        foo.select();
+        if(document.execCommand('paste')) {
+            console.log('paste = true:', foo.innerHTML);
+        }
+        })()`
+        ,docHdl);
+        await docHdl.dispose();
+
+        //console.log(document.getElementById('pasteid').textContent);
+        //`(async () => {; console.log('manchu: ', foo);})()`
+
+//             `(window.navigator.clipboard.readText()
+// .then(text => {
+// console.warn("timeout >>: ", text);
+// document.getElementById("pasteid").innerText = text;
+// })
+// .catch((e) => console.log(e.message));)()`
+            // return document.getElementById("pasteid").innerText;
+            //document.getElementById('pasteid').focus();
+        //`(async () => await navigator.clipboard.readText())()`,
+        // },docHdl);
+        //console.log('What are the contents?', contents);
+        // const contents = await page.evaluate(document => {
+        //     let el = document.createElement('div');
+        //     el.innerHTML = '<div id="pasteid" class="pastebox"></div>';
+        //     document.body.appendChild(el.firstChild);
+        //     const paste = document.getElementById('pasteid');
+        //     paste.focus();
+        //     document.execCommand('paste');
+        //     return paste.textContent;
+        // }, docHdl);
+        // await docHdl.dispose();
+
+
+
+
+        // await Promise.all([
+        //     page.waitForNavigation(),
+        //     page.waitForSelector('button[id="copyButton"]', {visible: true}),
+        //     page.click('button[id="copyButton"]'),
+        // ]).catch(err => console.log(err.message));
+        //const resp = await page.$eval('#copyButton', elem => elem.click());
+        // // await page.evaluate((INPUT_SELECTOR) => {
+        // //     return INPUT_SELECTOR.click();
+        // // }, button);
+        // // await page.click('#copyButton')
+        // //     .catch(e => console.log(e));
+        // //console.log(button);
+        // await page.screenshot({ path: "./screenshots/01-debug.png" });
+        // //await page.click('button[id="copyButton"]');
+
+        // const documentHandle = await page.evaluateHandle('document');
+        // const contents = await page.evaluate(document => document.execCommand('paste'), documentHandle);
+
+        // await documentHandle.dispose();
+        // await el.dispose();
+
+        // console.log('What are the contents?', contents);
+
+        // console.log('Pasted content: ', clipboardText);
+        //const clipboardText = getClipboardContents();
+        //console.log(clipboardText);
+        //expect(clipboardText).toBeTruthy
+    }, 10000);
 });
+
+async function click(selector, within='') {
+    const cssSelector = within ? `${within} ${selector}`: selector;
+    const element = await page.waitForSelector(cssSelector, {visible: true});
+    return await page.evaluate(el => el.click(), element);  // <---- this
+}
